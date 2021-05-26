@@ -1,0 +1,40 @@
+$darwing-wrap-padding: 20px;
+$drawing-bar-height: 24px;
+
+.drawing-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
+  align-items: stretch;
+  min-width: 1000px;
+  padding: $drawing-bar-height;
+
+  .canvas {
+    &-wrap {
+      display: flex;
+      flex-flow: column wrap;
+      flex: 4;
+      min-width: 800px;
+    }
+
+    &-button-area {
+      display: flex;
+      align-items: center;
+      height: $drawing-bar-height;
+      margin: 0px 10px 0px 0px;
+    }
+
+    &-drawing-area {
+      height: calc(100vh - #{$darwing-wrap-padding} - #{$darwing-wrap-padding} - #{$drawing-bar-height});
+      margin: 10px 10px 0px 0px;
+    }
+  }
+
+  .list-wrap {
+    display: flex;
+    flex: 1;
+    min-width: 200px;
+  }
+}

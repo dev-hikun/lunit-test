@@ -1,3 +1,6 @@
+@import './color';
+@import './drawingArea';
+
 html,
 body,
 h1,
@@ -12,10 +15,6 @@ li button input {
   padding: 0;
 }
 
-li {
-  display: block;
-}
-
 * {
   box-sizing: border-box;
 }
@@ -28,4 +27,18 @@ input {
   font-size: 1rem;
   line-height: 1.5;
   color: #333;
+}
+
+
+
+li {
+  display: block;
+}
+
+label {
+  cursor: pointer;
+  user-select: none;
+  &:hover {
+    opacity: .7;
+  }
 }

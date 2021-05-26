@@ -1,9 +1,6 @@
 import { combineReducers, configureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
-import InputIdReducer, { name as inputId } from './input-id-store';
 
-export const reducer = combineReducers({
-  [inputId]: InputIdReducer,
-});
+export const reducer = combineReducers({});
 export type RootState = ReturnType<typeof reducer>;
 export default configureStore({
   reducer,

@@ -25,12 +25,12 @@ $drawing-bar-height: 40px;
       align-items: center;
       height: $drawing-bar-height;
       padding: 0px 10px;
-      border: 1px solid $gray-ultra-light;
+      border: 1px solid $gray-light;
     }
 
     &-drawing-area {
       width: 100%;
-      border: 1px solid $gray-ultra-light;
+      border: 1px solid $gray-light;
       border-top-width: 0px;
       height: calc(100% - #{$drawing-bar-height});
 
@@ -38,12 +38,47 @@ $drawing-bar-height: 40px;
     }
   }
 
-  .list-wrap {
-    display: flex;
-    padding: 10px 10px;
-    border: 1px solid $gray-ultra-light;
-    border-left-width: 0px;
-    max-width: 280px;
-    min-width: 280px;
+  .list {
+    &-wrap {
+      display: flex;
+      padding: 10px 10px;
+      border: 1px solid $gray-light;
+      border-left-width: 0px;
+      max-width: 280px;
+      min-width: 280px;
+    }
+
+    &-li-wrap {
+      width: 100%;
+      height: 100%;
+    }
+
+    &-item {
+      padding: 10px 10px;
+      cursor: pointer;
+      border-bottom: 1px solid $gray-ultra-light;
+
+      &:hover {
+        color: $purple;
+      }
+
+      &-title {
+        color: $default-text-color !important;
+        cursor: default;
+        text-align: center;
+        border-bottom: 1px solid $default-text-color;
+        padding: 10px 10px;
+      }
+
+      &-active {
+        background-color: $purple-light;
+        color: $white;
+        border-bottom: 1px solid $purple;
+
+        &:hover {
+          color: $white;
+        }
+      }
+    }
   }
 }

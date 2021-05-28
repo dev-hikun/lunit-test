@@ -1,7 +1,8 @@
 import { getUniqueId, isHover } from 'common/util';
+import { countReset } from 'console';
 import useShape from 'hooks/useShape';
 import { Mode, Point, Shape } from 'interface';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 type CanvasDrawingArea = {
   mode: Mode;
@@ -14,12 +15,16 @@ const CanvasDrawingArea = ({ mode }: CanvasDrawingArea) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // canvas의 context
   const [ctx, setCtx] = useState<CanvasRenderingContext2D>();
-  // 현재 드로잉중인 객체의 아이디
-  const [currentId, setCurrentId] = useState<string>();
   // 현재 드로잉중인 객체
-  const [shapes, setShapes] = useState<Array<Shape>>([]);
+  const [drawingShape, setDrawingShape] = useState<Shape>();
   // redux에 저장하는 shape
   const { shapes: shapesStore, addShape, setOver, deleteShape } = useShape();
+  // zoom
+  const [zoom, setZoom] = useState(1.0);
+  // factor
+  const factor = 0.05;
+  // center point
+  const [centerPoint, setCenterPoint] = useState<Point>({ x: 0, y: 0 });
 
   // mount
   useEffect(() => {
@@ -34,14 +39,31 @@ const CanvasDrawingArea = ({ mode }: CanvasDrawingArea) => {
         context.strokeStyle = 'black';
         context.fillStyle = 'blue';
         context.lineWidth = 2.5;
+
+        // center를 원점으로 둠
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        // 최초 원점의 위치를 가운데로 설정
+        context.setTransform(0, 0, 0, 0, centerX, centerY);
+        setCenterPoint({ x: centerX, y: centerY });
         setCtx(context);
       }
     }
   }, []);
 
+  // zoom 변경시
+  useEffect(() => {
+    if (ctx) {
+      const { a, d, e, f } = ctx?.getTransform();
+      if (a !== zoom && d !== zoom) {
+        ctx.setTransform(zoom, 0, 0, zoom, e, f);
+      }
+    }
+  }, [ctx, zoom]);
+
   // 1) 마우스 클릭을 시작할 때
   const startDrawing = useCallback(() => {
-    if (mode === 'drawing') setCurrentId(getUniqueId());
+    if (mode === 'drawing') setDrawingShape({ id: getUniqueId(), points: [] });
     else if (mode === 'delete') {
       const overShape = shapesStore.find((item) => item.isOver);
       if (overShape && confirm('정말로 삭제하시겠습니까?')) deleteShape(overShape.id);
@@ -50,18 +72,21 @@ const CanvasDrawingArea = ({ mode }: CanvasDrawingArea) => {
 
   const clearCanvas = useCallback(() => {
     if (!ctx || !wrapRef.current) return;
+    const wrap = wrapRef.current;
     ctx.beginPath();
-    ctx.clearRect(0, 0, wrapRef.current.offsetWidth, wrapRef.current.offsetHeight);
-  }, [ctx]);
+    ctx.clearRect(-centerPoint.x, -centerPoint.y, wrap.offsetWidth, wrap.offsetHeight);
+  }, [ctx, zoom]);
 
   // 2) canvas 위에서의 마우스 움직일 때
   const mouseOnCanvas = useCallback(
     ({ nativeEvent }: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
       if (!ctx) return;
-      const { offsetX: x, offsetY: y } = nativeEvent;
+      const { offsetX, offsetY } = nativeEvent;
+      const x = offsetX - centerPoint.x;
+      const y = offsetY - centerPoint.y;
 
       // drawing 중이지 않을때
-      if (!currentId) {
+      if (!drawingShape) {
         const shape = shapesStore.filter((shape) => isHover({ x, y }, shape));
         if (shape.length === 1 && mode === 'delete') {
           setOver(shape[0].id);
@@ -72,53 +97,52 @@ const CanvasDrawingArea = ({ mode }: CanvasDrawingArea) => {
       }
 
       // drawing 중일 때 shape에 계속 point를 추가해준다.
-      const findObject = shapes.find((item) => item.id === currentId);
-      const target: Array<Point> = findObject ? [...findObject.points] : [];
-      if (target.findIndex((item) => item.x === x && item.y === y) === -1) {
-        target.push({ x, y });
-        setShapes([...shapes.filter((shape) => shape.id !== currentId), { id: currentId, points: target }]);
+      const { points, id } = drawingShape;
+      if (points.findIndex((item) => item.x === x && item.y === y) === -1) {
+        const newPoints = [...points, { x, y }];
+        setDrawingShape({ id, points: newPoints });
       }
     },
-    [ctx, currentId, shapes, shapesStore],
+    [ctx, drawingShape, shapesStore, centerPoint],
   );
 
   // 3) 마우스를 뗐을 때 or canvas 밖으로 마우스가 나갔을 때
   const finishDrawing = useCallback(() => {
-    const target = shapes.find((item) => item.id === currentId);
-    if (target) {
-      // 제일 첫 점과 이어 준 후 현재 도형을 끝낸다.
-      const { x, y } = target.points[0];
-      target.points.push({ x, y });
-      setShapes([...shapes.filter((shape) => shape.id !== target.id), target]);
-      setCurrentId(undefined);
+    // 제일 첫 점과 이어 준 후 현재 도형을 끝낸다.
+    if (drawingShape) {
+      const { points, id } = drawingShape;
+      if (points.length < 2) {
+        setDrawingShape(undefined);
+        return;
+      }
+      const { x, y } = points[0];
+      const newPoints = [...points, { x, y }];
+      setDrawingShape({ id, points: newPoints });
     }
-  }, [currentId, shapes]);
+  }, [drawingShape]);
 
   // 그리기가 완료되었는지 체크한 후 다 그려진 녀석들을 store에 저장한다.
   const onChangeShape = useCallback(() => {
-    if (shapes.length === 0) return;
-    for (const shape of shapes) {
-      const points = shape.points;
-      const first = points[0];
-      const last = points[points.length - 1];
+    if (!drawingShape) return;
 
-      // 첫 점과 마지막 점이 이어졌는지 체크하여 이어졌다면
-      if (points.length > 1 && first.x === last.x && first.y === last.y) {
-        if (shapesStore.findIndex((shapeStore) => shapeStore.id === shape.id) > -1) continue;
+    const { points, id } = drawingShape;
+    const first = points[0];
+    const last = points[points.length - 1];
 
-        const { id, points } = shape;
-        // 다 그려진 shape를 redux 변수에 저장
-        addShape({
-          id,
-          points,
-          isOver: false,
-        });
-        // 다 그려진 shape은 목록에서 제거
-        setShapes(shapes.filter((shape) => shape.id !== id));
-        break;
-      }
+    // 첫 점과 마지막 점이 이어졌는지 체크하여 이어졌다면
+    if (points.length > 1 && first.x === last.x && first.y === last.y) {
+      if (shapesStore.findIndex((shapeStore) => shapeStore.id === id) > -1) return;
+
+      // 다 그려진 shape를 redux 변수에 저장
+      addShape({
+        id,
+        points,
+        isOver: false,
+      });
+      // 다 그려졌으므로 지움
+      setDrawingShape(undefined);
     }
-  }, [shapes, shapesStore]);
+  }, [drawingShape, shapesStore]);
 
   // shape가 변경될 때마다 바로 위의 함수를 실행함
   useEffect(() => {
@@ -130,9 +154,9 @@ const CanvasDrawingArea = ({ mode }: CanvasDrawingArea) => {
     clearCanvas();
     if (ctx) {
       // drawing 중인 객체
-      for (const shape of shapes) {
+      if (drawingShape) {
         ctx.beginPath();
-        for (const { x, y } of shape.points) {
+        for (const { x, y } of drawingShape.points) {
           ctx.lineTo(x, y);
         }
         ctx.stroke();
@@ -148,7 +172,7 @@ const CanvasDrawingArea = ({ mode }: CanvasDrawingArea) => {
         ctx.stroke();
       }
     }
-  }, [shapes, ctx, shapesStore]);
+  }, [drawingShape, shapesStore, clearCanvas]);
 
   return (
     <div className="canvas-drawing-area" ref={wrapRef}>
@@ -159,6 +183,14 @@ const CanvasDrawingArea = ({ mode }: CanvasDrawingArea) => {
         onMouseMove={mouseOnCanvas}
         onMouseLeave={finishDrawing}
       />
+      <div className="canvas-zooming-button-area">
+        <button type="button" className="plus" onClick={() => setZoom(zoom + factor)}>
+          +
+        </button>
+        <button type="button" className="minus" disabled={zoom - factor < 0} onClick={() => setZoom(zoom - factor)}>
+          -
+        </button>
+      </div>
     </div>
   );
 };

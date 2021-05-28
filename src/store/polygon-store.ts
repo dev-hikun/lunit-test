@@ -26,5 +26,5 @@ const { actions, reducer } = createSlice({
   },
 });
 
-export const { addShape, setOver } = actions;
+export const { addShape, setOver, deleteShape } = actions;
 export default reducer;

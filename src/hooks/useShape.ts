@@ -1,7 +1,11 @@
 import { ShapeStore } from 'interface';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'store';
-import { addShape as addShapeStore, setOver as setOverStore } from 'store/polygon-store';
+import {
+  addShape as addShapeStore,
+  setOver as setOverStore,
+  deleteShape as deleteShapeStore,
+} from 'store/polygon-store';
 
 const useShape = () => {
   const shapes = useSelector<RootState>((state) => state.polygon) as Array<ShapeStore>;
@@ -13,10 +17,15 @@ const useShape = () => {
     dispatch(addShapeStore(shape));
   };
 
+  const deleteShape = (id: string) => {
+    console.log('deleteShape', id);
+    dispatch(deleteShapeStore(id));
+  };
+
   const setOver = (id?: string) => {
     dispatch(setOverStore(id));
   };
 
-  return { shapes, addShape, setOver };
+  return { shapes, addShape, setOver, deleteShape };
 };
 export default useShape;

@@ -19,7 +19,7 @@ const CanvasDrawingArea = ({ mode }: CanvasDrawingArea) => {
   // 현재 드로잉중인 객체
   const [shapes, setShapes] = useState<Array<Shape>>([]);
   // redux에 저장하는 shape
-  const { shapes: shapesStore, addShape, setOver } = useShape();
+  const { shapes: shapesStore, addShape, setOver, deleteShape } = useShape();
 
   // mount
   useEffect(() => {
@@ -42,8 +42,11 @@ const CanvasDrawingArea = ({ mode }: CanvasDrawingArea) => {
   // 1) 마우스 클릭을 시작할 때
   const startDrawing = useCallback(() => {
     if (mode === 'drawing') setCurrentId(getUniqueId());
-    else if (mode === 'delete') console.log('delete mode');
-  }, [mode]);
+    else if (mode === 'delete') {
+      const overShape = shapesStore.find((item) => item.isOver);
+      if (overShape && confirm('정말로 삭제하시겠습니까?')) deleteShape(overShape.id);
+    }
+  }, [mode, shapesStore]);
 
   const clearCanvas = useCallback(() => {
     if (!ctx || !wrapRef.current) return;

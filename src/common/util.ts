@@ -28,7 +28,6 @@ export const isHover = ({ x, y }: Point, { points: p }: Shape) => {
   for (let i = 0; i < p.length; i = i + 2) {
     // 너무 점이 많으므로 +2
     const j = (i + 2) % p.length;
-
     // 마우스 포인트의 y좌표가 p[i], p[j] 직선의 사이에 있다면
     if (p[i].y > y != p[j].y > y) {
       // atx = 마우스 포인터를 지나는 수평선과 (p[i], p[j])의 교점
@@ -37,6 +36,12 @@ export const isHover = ({ x, y }: Point, { points: p }: Shape) => {
       if (x < atX) crosses++;
     }
   }
+
+  // TODO: 제일 바깥쪽 라인만 구해서 안쪽에서 추가된 crosses를 빼주면 좋을듯 하다.
+  // 사실 바깥쪽 라인만 따로 모아서 위의 로직을 바꾸는게 제일 좋지만 일단 시간 상 위의 투두만 진행하고
+  // 시간이 생길때 다시 리팩토링 하도록 하자.
+  // (별모양 등 다각형 내부에도 선이 들어갈 경우 위의 로직만으로는 불충분)
+
   // 반 직선을 그었을 경우에 라인과 만나는 교점이 홀수라면 다각형 내부, 짝수라면 다각형 외부이다.
   return crosses % 2 > 0;
 };

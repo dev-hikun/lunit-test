@@ -1,13 +1,14 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { Shape } from 'interface';
+import { ShapeStore } from 'interface';
 
 export const name = 'polygon';
-const initialState: Array<Shape> = [];
+// 완성된 polygon이 저장됨.
+const initialState: Array<ShapeStore> = [];
 const { actions, reducer } = createSlice({
   name,
   initialState,
   reducers: {
-    addShape: (state, action: { payload: Shape }) => {
+    addShape: (state, action: { payload: ShapeStore }) => {
       const { payload } = action;
       return [...state, payload];
     },
@@ -15,8 +16,15 @@ const { actions, reducer } = createSlice({
       const { payload } = action;
       return state.filter((shape) => shape.id !== payload);
     },
+    setOver: (state, action: { payload: string | undefined }) => {
+      const { payload } = action;
+      return state.reduce(
+        (arr: Array<ShapeStore>, { id, points }) => [...arr, { id, points, isOver: payload === id }],
+        [],
+      );
+    },
   },
 });
 
-export const { addShape } = actions;
+export const { addShape, setOver } = actions;
 export default reducer;

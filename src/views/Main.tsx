@@ -1,5 +1,6 @@
 import Switch from 'components/Switch';
 import React from 'react';
+import CanvasDrawingArea from './CanvasDrawingArea';
 
 const Main = () => {
   return (
@@ -8,9 +9,7 @@ const Main = () => {
         <div className="canvas-button-area">
           <Switch label="Delete mode" />
         </div>
-        <div className="canvas-drawing-area">
-          <canvas />
-        </div>
+        <CanvasDrawingArea />
       </div>
       <div className="list-wrap">test</div>
     </div>

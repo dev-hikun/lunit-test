@@ -25,11 +25,9 @@
   }
 
   input[type=checkbox] { 
-    display: none;
-    
-    &:checked ~ span {
-      
-    background-color: $purple;
+    display: none;    
+    &:checked ~ span {      
+      background-color: $purple;
       &:before {
         transform: translateX(16px);
       }

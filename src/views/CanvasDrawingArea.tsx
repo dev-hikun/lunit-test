@@ -1,7 +1,8 @@
 import { getUniqueId, isHover } from 'common/util';
+import { countReset } from 'console';
 import useShape from 'hooks/useShape';
 import { Mode, Point, Shape } from 'interface';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 type CanvasDrawingArea = {
   mode: Mode;
@@ -20,6 +21,12 @@ const CanvasDrawingArea = ({ mode }: CanvasDrawingArea) => {
   const [shapes, setShapes] = useState<Array<Shape>>([]);
   // redux에 저장하는 shape
   const { shapes: shapesStore, addShape, setOver, deleteShape } = useShape();
+  // zoom
+  const [zoom, setZoom] = useState(1.0);
+  // factor
+  const factor = 0.05;
+  // center point
+  const [centerPoint, setCenterPoint] = useState<Point>({ x: 0, y: 0 });
 
   // mount
   useEffect(() => {
@@ -34,10 +41,26 @@ const CanvasDrawingArea = ({ mode }: CanvasDrawingArea) => {
         context.strokeStyle = 'black';
         context.fillStyle = 'blue';
         context.lineWidth = 2.5;
+
+        // center를 원점으로 둠
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        context.setTransform(0, 0, 0, 0, centerX, centerY);
+        setCenterPoint({ x: centerX, y: centerY });
         setCtx(context);
       }
     }
   }, []);
+
+  // zoom 변경시
+  useEffect(() => {
+    if (ctx) {
+      const { a, d, e, f } = ctx?.getTransform();
+      if (a !== zoom && d !== zoom) {
+        ctx.setTransform(zoom, 0, 0, zoom, e, f);
+      }
+    }
+  }, [ctx, zoom]);
 
   // 1) 마우스 클릭을 시작할 때
   const startDrawing = useCallback(() => {
@@ -50,15 +73,18 @@ const CanvasDrawingArea = ({ mode }: CanvasDrawingArea) => {
 
   const clearCanvas = useCallback(() => {
     if (!ctx || !wrapRef.current) return;
+    const wrap = wrapRef.current;
     ctx.beginPath();
-    ctx.clearRect(0, 0, wrapRef.current.offsetWidth, wrapRef.current.offsetHeight);
-  }, [ctx]);
+    ctx.clearRect(-centerPoint.x, -centerPoint.y, wrap.offsetWidth, wrap.offsetHeight);
+  }, [ctx, zoom]);
 
   // 2) canvas 위에서의 마우스 움직일 때
   const mouseOnCanvas = useCallback(
     ({ nativeEvent }: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
       if (!ctx) return;
-      const { offsetX: x, offsetY: y } = nativeEvent;
+      const { offsetX, offsetY } = nativeEvent;
+      const x = offsetX - centerPoint.x;
+      const y = offsetY - centerPoint.y;
 
       // drawing 중이지 않을때
       if (!currentId) {
@@ -79,7 +105,7 @@ const CanvasDrawingArea = ({ mode }: CanvasDrawingArea) => {
         setShapes([...shapes.filter((shape) => shape.id !== currentId), { id: currentId, points: target }]);
       }
     },
-    [ctx, currentId, shapes, shapesStore],
+    [ctx, currentId, shapes, shapesStore, centerPoint],
   );
 
   // 3) 마우스를 뗐을 때 or canvas 밖으로 마우스가 나갔을 때
@@ -137,7 +163,6 @@ const CanvasDrawingArea = ({ mode }: CanvasDrawingArea) => {
         }
         ctx.stroke();
       }
-
       // drawing 완료된 객체
       for (const shape of shapesStore) {
         ctx.beginPath();
@@ -148,7 +173,7 @@ const CanvasDrawingArea = ({ mode }: CanvasDrawingArea) => {
         ctx.stroke();
       }
     }
-  }, [shapes, ctx, shapesStore]);
+  }, [shapes, shapesStore, clearCanvas]);
 
   return (
     <div className="canvas-drawing-area" ref={wrapRef}>
@@ -159,6 +184,14 @@ const CanvasDrawingArea = ({ mode }: CanvasDrawingArea) => {
         onMouseMove={mouseOnCanvas}
         onMouseLeave={finishDrawing}
       />
+      <div className="canvas-zooming-button-area">
+        <button type="button" className="plus" onClick={() => setZoom(zoom + factor)}>
+          +
+        </button>
+        <button type="button" className="minus" disabled={zoom - factor < 0} onClick={() => setZoom(zoom - factor)}>
+          -
+        </button>
+      </div>
     </div>
   );
 };

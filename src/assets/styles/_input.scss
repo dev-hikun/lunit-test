@@ -1,3 +1,38 @@
 .switch {
+  display: flex;
   
+  span {
+    display: block;
+    position: relative;
+    width: 24px;
+    height: 24px;
+    border-radius: 12px;
+    width: 40px;
+    padding: 2px 2px;
+    margin-right: 5px;
+    background-color: $default-text-color;
+
+    &:before {
+      width: 18px;
+      height: 18px;
+      border-radius: 12px;
+      background-color: $white;
+      border: 1px solid $gray-light;
+      content: '';
+      display: block;
+      transition: all 0.3s ease;
+    }
+  }
+
+  input[type=checkbox] { 
+    display: none;
+    
+    &:checked ~ span {
+      
+    background-color: $purple;
+      &:before {
+        transform: translateX(16px);
+      }
+    }
+  }
 }

@@ -1,17 +1,25 @@
+import { getUniqueId } from 'common/util';
 import React from 'react';
 interface SwitchProps {
-  checked?: boolean;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   id?: string;
   label?: string;
+  className?: string;
+  isDisabled?: boolean;
+  checked?: boolean;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 const Switch = ({ id, label, checked, onChange }: SwitchProps) => {
-  return (
-    <label htmlFor={id} className="switch">
+  const switchId = id || getUniqueId();
+
+  const checkboxElement = <input id={switchId} type="checkbox" checked={checked} onChange={onChange} />;
+  const labelElement = (
+    <label htmlFor={switchId} className="switch">
+      {checkboxElement}
       <span />
-      <input id={id} type="checkbox" checked={checked} onChange={onChange} />
       {label}
     </label>
   );
+
+  return labelElement;
 };
 export default Switch;

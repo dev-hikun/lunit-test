@@ -1,6 +1,6 @@
 export interface Shape {
   id: string;
-  shape: Array<Point>;
+  points: Array<Point>;
 }
 
 export interface Point {

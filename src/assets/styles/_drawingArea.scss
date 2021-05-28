@@ -25,12 +25,12 @@ $drawing-bar-height: 40px;
       align-items: center;
       height: $drawing-bar-height;
       padding: 0px 10px;
-      border: 1px solid $gray-light;
+      border: 1px solid $gray-ultra-light;
     }
 
     &-drawing-area {
       width: 100%;
-      border: 1px solid $gray-light;
+      border: 1px solid $gray-ultra-light;
       border-top-width: 0px;
       height: calc(100% - #{$drawing-bar-height});
 
@@ -41,7 +41,7 @@ $drawing-bar-height: 40px;
   .list-wrap {
     display: flex;
     padding: 10px 10px;
-    border: 1px solid $gray-light;
+    border: 1px solid $gray-ultra-light;
     border-left-width: 0px;
     max-width: 280px;
     min-width: 280px;

@@ -1,8 +1,8 @@
 import { getUniqueId, isHover } from 'common/util';
-import { countReset } from 'console';
+import usePrevious from 'hooks/usePrevious';
 import useShape from 'hooks/useShape';
 import { Mode, Point, Shape } from 'interface';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 type CanvasDrawingArea = {
   mode: Mode;
@@ -44,7 +44,7 @@ const CanvasDrawingArea = ({ mode }: CanvasDrawingArea) => {
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
         // 최초 원점의 위치를 가운데로 설정
-        context.setTransform(0, 0, 0, 0, centerX, centerY);
+        context.setTransform(zoom, 0, 0, zoom, centerX, centerY);
         setCenterPoint({ x: centerX, y: centerY });
         setCtx(context);
       }
@@ -82,8 +82,10 @@ const CanvasDrawingArea = ({ mode }: CanvasDrawingArea) => {
     ({ nativeEvent }: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
       if (!ctx) return;
       const { offsetX, offsetY } = nativeEvent;
-      const x = offsetX - centerPoint.x;
-      const y = offsetY - centerPoint.y;
+      let x = offsetX - centerPoint.x;
+      let y = offsetY - centerPoint.y;
+      x *= ctx.canvas.width / (ctx.canvas.width * zoom);
+      y *= ctx.canvas.height / (ctx.canvas.height * zoom);
 
       // drawing 중이지 않을때
       if (!drawingShape) {
